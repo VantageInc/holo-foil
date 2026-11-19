@@ -66,6 +66,15 @@ const CSS = `
 .tx-colour .tx-del { background: rgba(255, 255, 255, .1); }
 .tx-colour .tx-del:hover { background: rgba(255, 255, 255, .22); }
 .tx :focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+/* Узкий экран (телефон): панель закрыла бы карточку, поэтому она свёрнута в кнопку и открывается по нажатию. */
+.tx-toggle { display: none; }
+@media (max-width: 639px) {
+  .tx-toggle { display: block; position: sticky; top: 0; z-index: 1; width: 100%; min-height: 44px; padding: 0 16px; border: 0;
+    background: rgba(20, 20, 23, .96); color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+  .tx[data-collapsed="true"] { width: auto; }
+  .tx[data-collapsed="true"] .tx-sec { display: none; }
+  .tx[data-collapsed="false"] .tx-toggle { border-bottom: 1px solid rgba(255, 255, 255, .08); }
+}
 `;
 
 function el(tag, props = {}, ...children) {
@@ -370,6 +379,15 @@ export function mountPanel({ texture, colours, glow, filter }) {
   document.head.append(el('style', { textContent: CSS }));
   const root = el('aside', { className: 'tx' });
   root.setAttribute('aria-label', 'Настройки фольги');
-  root.append(textureSection(texture), coloursSection(colours), glowSection(glow), filterSection(filter));
+  // Кнопка видна только на узком экране (см. CSS); на широком панель всегда раскрыта.
+  const toggle = el('button', { className: 'tx-toggle', type: 'button' });
+  const collapse = (on) => {
+    root.dataset.collapsed = String(on);
+    toggle.textContent = on ? 'Настройки' : 'Скрыть настройки';
+    toggle.setAttribute('aria-expanded', String(!on));
+  };
+  toggle.addEventListener('click', () => collapse(root.dataset.collapsed !== 'true'));
+  collapse(true);
+  root.append(toggle, textureSection(texture), coloursSection(colours), glowSection(glow), filterSection(filter));
   document.body.append(root);
 }
